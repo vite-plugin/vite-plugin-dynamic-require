@@ -1,5 +1,7 @@
 import path from 'path'
 import {
+  createFilter,
+  FilterPattern,
   type Plugin,
   type ResolvedConfig,
 } from 'vite'
@@ -15,8 +17,9 @@ import { analyze } from './analyze'
 import { DynamicRequire } from './dynamic-require'
 
 export interface Options {
-  extensions?: string[]
-  filter?: (id: string) => false | void
+  extensions?: string[],
+  include?: FilterPattern;
+  exclude?: FilterPattern;
   dynamic?: {
     /**
      * 1. `true` - Match all possibilities as much as possible, More like `webpack`
@@ -35,6 +38,7 @@ export function viteRequire(options: Options = {}): Plugin {
   let config: ResolvedConfig
   let dynamicRequire: DynamicRequire
 
+  const filter = createFilter(options.include || /\.([jt]sx?)$/, options.exclude)
   return {
     name: 'vite-require',
     configResolved(_config) {
@@ -48,7 +52,7 @@ export function viteRequire(options: Options = {}): Plugin {
       if (/node_modules\/(?!\.vite\/)/.test(pureId)) return
       if (!extensions.includes(path.extname(pureId))) return
       if (!isCommonjs(code)) return
-      if (options.filter?.(pureId) === false) return
+      if (!filter(id) || !filter(pureId)) return
 
       const ast = this.parse(code)
       const analyzed = analyze(ast, code)
