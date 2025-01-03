@@ -225,8 +225,11 @@ export class DynamicRequire {
         // TODO: execute the Options.onFiles
 
         if (!files.length) continue
-
-        const maps = mappingPath(files, resolved)
+        const mapAlias = resolved
+            ? { [resolved.alias.relative]: resolved.alias.findString }
+            : undefined
+        // @ts-ignore
+        const maps = mappingPath(files, mapAlias)
         const runtimeFnName = `__matchRequireRuntime${counter}__`
         let counter2 = 0
         const cases: string[] = []
